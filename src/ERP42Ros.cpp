@@ -67,6 +67,10 @@ public:
         // open serial device
         // if open device fails, throw.
         // there is no catch for this throw, so this process will be exit with error.
+        // this TODO is not cleared. 
+        
+        // trouble: double initialization. 
+        // trouble: not using device_name forwarded.
         RS232 = SerialPort("/dev/ttyUSB0");
     }
     ~ERP42Interface()

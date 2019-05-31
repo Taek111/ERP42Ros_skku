@@ -23,6 +23,15 @@ void SerialPort::Open(const char *device_name){
 	else
     cout << "\nDevice Opened Successfully" <<endl;
   
+  // TODO: 
+  // if opening device fails, Configure should not be called.
+  // You have to consider the object that calls this 'Open(const char*)' function.
+  // if there is some sequence that uses fd inside this object, it will fail.
+  // try one of these.
+  // 1. create ' bool is_open()' function and make caller recognize opening is success or not.
+  // 2. make this function bool open(const char*)' and handle return value from caller
+  // I recommend first one.
+
   Configure();
 }
 
@@ -82,6 +91,9 @@ void SerialPort::ReadPacket(string& data){
 			}
 		if(readBuffer[0] == 'X') break; 
 	} 
+  // TODO:
+  // there is no case for fd is -1
+
 	ssize_t n = read(fd, &readBuffer[0], 15);
 	if(n != 15) {
 		cout << "Packet read error!" << endl;
@@ -96,13 +108,19 @@ void SerialPort::Read(string& data){
 		cout << "Read was called but file descriptor was 0, file has not been opened" << endl;
 		return;
     }
+  // TODO:
+  // there is no case for fd is -1
+
 	ssize_t n = read(fd, &readBuffer[0], defaultReadBufferSize);
 	data = string(&readBuffer[0], n);
 	
 }
 
 void SerialPort::Write(const string& data){
-  int writeResult = write(fd, data.c_str(), data.size());
+  
+  // TODO:
+  // there is no case for fd is -1
+int writeResult = write(fd, data.c_str(), data.size());
   
   if(writeResult == -1){
     cout << "Write failed" << endl;
@@ -110,6 +128,8 @@ void SerialPort::Write(const string& data){
 }
 
 
+// TODO:
+// test should be created on seperated files.
 
 int test_main(void){
 	

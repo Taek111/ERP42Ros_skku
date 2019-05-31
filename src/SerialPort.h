@@ -9,6 +9,11 @@
 #include <termios.h> 	// POSIX terminal control definitions (struct termios)
 #include <system_error>	// For throwing std::system_error
 
+// TODO:
+// too much including on header. this will increase compile time and binary size later... 
+// move privatly using headers to inside the 'SerialPort.cpp' file
+// I think vector and string is enough for now.
+
 using namespace std;
 
 class SerialPort
