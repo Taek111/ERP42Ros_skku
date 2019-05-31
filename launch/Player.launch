@@ -1,0 +1,14 @@
+<launch>
+
+  <group ns="Control">
+
+    <node pkg="erp42_ros" name="monitor0" type="Monitor.py">
+      <remap from="feedback" to="sys/feedback"/>
+      <remap from="ctrl_input" to="sys/input"/>
+      <remap from="target" to="sys/target"/>
+    </node>
+
+  </group>
+  
+
+</launch>
