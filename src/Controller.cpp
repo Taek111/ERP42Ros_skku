@@ -30,9 +30,9 @@ public:
         input_msg.Estop = false;
         input_msg.gear = target_msg.gear;
         input_msg.speed_mps = target_msg.speed_mps;
-        input_msg.speed_kph = target_msg.speed_mps * 1000.0 / 3600.0;
+        input_msg.speed_kph = target_msg.speed_mps * 3600.0 / 1000.0;
         input_msg.steer_rad = target_msg.steer_rad;
-        input_msg.steer_degree = target_msg.steer_rad / 180.0 * M_PI;
+        input_msg.steer_degree = target_msg.steer_rad * 180.0 / M_PI;
         input_msg.brake = target_msg.brake;
 
         ctrl_input_pub.publish(input_msg);
