@@ -53,6 +53,80 @@ enum packet_size : unsigned int
     SIZE_P2U = sizeof(pcu_to_upper),
     SIZE_U2P = sizeof(upper_to_pcu),
 };
+
+// you can use ringbuf class and is_valid_P2U() to examine validity of packet
+class ringbuf
+{
+private:
+    char *_buf;
+    size_t _cursor;
+    const size_t _size;
+
+public:
+    ringbuf(size_t size) : _buf(new char[size]), _cursor(0), _size(size)
+    {
+        char *iter = _buf;
+        const char *end = _buf + size;
+        while (iter != end)
+        {
+            *iter = 0;
+            ++iter;
+        }
+    }
+    ~ringbuf()
+    {
+        delete[] _buf;
+    }
+    void reset() { _cursor = 0; }
+    size_t size() { return _size; }
+    const char &at(size_t index)
+    {
+        return _buf[(index + _cursor) % _size];
+    }
+    char *cursor()
+    {
+        return &_buf[_cursor];
+    }
+    void next(size_t offset)
+    {
+        _cursor = (_cursor + offset) % _size;
+    }
+    const char &operator[](size_t index)
+    {
+        return at(index);
+    }
+    void operator++()
+    {
+        return next(1);
+    }
+    void push(const char &data)
+    {
+        *cursor() = data;
+        next(1);
+    }
+    void copy(void *dst, size_t size)
+    {
+        size_t i = 0;
+        char *iter = (char *)dst;
+        const char *end = iter + size;
+        while (iter != end)
+        {
+            *iter = at(i);
+            ++iter;
+            ++i;
+            if (i == size)
+                break;
+        }
+    }
+};
+bool is_valid_P2U(ringbuf &buf)
+{
+    return (buf[0] == 0x53) &&
+           (buf[1] == 0x54) &&
+           (buf[2] == 0x58) &&
+           (buf[16] == 0x0D) &&
+           (buf[17] == 0x0A);
+}
 }; // namespace
 
 class ERP42Interface
@@ -67,9 +141,9 @@ public:
         // open serial device
         // if open device fails, throw.
         // there is no catch for this throw, so this process will be exit with error.
-        // this TODO is not cleared. 
-        
-        // trouble: double initialization. 
+        // this TODO is not cleared.
+
+        // trouble: double initialization.
         // trouble: not using device_name forwarded.
         RS232 = SerialPort("/dev/ttyUSB0");
     }
@@ -77,7 +151,7 @@ public:
     {
         // TODO :
         // close the device
-         RS232.Close();
+        RS232.Close();
     }
     void OnInputMsgRecv(const erp42_ros::ERP42_input &msg)
     {
@@ -99,7 +173,7 @@ public:
         // Receive feedback message from RS232
         // and store it to the this->u2p
         RS232.ReadPacket(readBuffer);
-        p2uPacket = reinterpret_cast<unsigned char*>(const_cast<char*>(readBuffer.c_str()));
+        p2uPacket = reinterpret_cast<unsigned char *>(const_cast<char *>(readBuffer.c_str()));
         p2u.AorM = p2uPacket[0];
         p2u.EStop = p2uPacket[1];
         p2u.gear = p2uPacket[2];
@@ -109,21 +183,21 @@ public:
         p2u.__steer[1] = p2uPacket[6];
         p2u.brake = p2uPacket[7];
         p2u.__enc[0] = p2uPacket[8];
-        p2u.__enc[1] = p2uPacket[9];        
-        p2u.__enc[2] = p2uPacket[10];  
-        p2u.__enc[3] = p2uPacket[11];  
+        p2u.__enc[1] = p2uPacket[9];
+        p2u.__enc[2] = p2uPacket[10];
+        p2u.__enc[3] = p2uPacket[11];
         p2u.alive = p2uPacket[12];
         // TODO :
         // if there was incomming message from RS232,
         // copy the message to the this->feedback_msg properly
-        feedback_msg.mode = (p2u.AorM == 0x01)? (int16_t)1 : (int16_t)0; 
-        feedback_msg.Estop = (p2u.EStop == 0x01)? true : false;
-        feedback_msg.gear =  (int16_t)p2u.gear;
-        feedback_msg.speed_mps = (double) p2u.speed / 36;
-        feedback_msg.speed_kph = (double) p2u.speed / 10;
-        feedback_msg.steer_rad = (double) (M_PI / 180) * p2u.steer / 71;
-        feedback_msg.steer_degree = (double) p2u.steer / 71;
-        feedback_msg.brake = (int16_t) p2u.brake;
+        feedback_msg.mode = (p2u.AorM == 0x01) ? (int16_t)1 : (int16_t)0;
+        feedback_msg.Estop = (p2u.EStop == 0x01) ? true : false;
+        feedback_msg.gear = (int16_t)p2u.gear;
+        feedback_msg.speed_mps = (double)p2u.speed / 36;
+        feedback_msg.speed_kph = (double)p2u.speed / 10;
+        feedback_msg.steer_rad = (double)(M_PI / 180) * p2u.steer / 71;
+        feedback_msg.steer_degree = (double)p2u.steer / 71;
+        feedback_msg.brake = (int16_t)p2u.brake;
         feedback_msg.encoder = p2u.enc;
 
         // After Copy, Publish to the ROS
@@ -132,7 +206,7 @@ public:
         // TODO :
         // make packet on u2p from latest ERP42_input
         u2p.AorM = (input_msg.mode == 1) ? 0x01 : 0x00;
-        u2p.EStop = (input_msg.Estop == true) ? 0x01: 0x00;
+        u2p.EStop = (input_msg.Estop == true) ? 0x01 : 0x00;
         u2p.gear = (unsigned char)input_msg.gear;
         u2p.speed = (unsigned short)(input_msg.speed_kph * 10);
         u2p.steer = (short)(input_msg.steer_degree * 71);
@@ -140,7 +214,7 @@ public:
         u2p.alive = p2u.alive;
         // TODO :
         // send the packet via RS232
-        
+
         u2pPacket[0] = 0x53;
         u2pPacket[1] = 0x54;
         u2pPacket[2] = 0x58;
@@ -154,10 +228,9 @@ public:
         u2pPacket[10] = u2p.brake;
         u2pPacket[11] = u2p.alive;
         u2pPacket[12] = 0x0d;
-        u2pPacket[13] = 0x0a;   
-        writeBuffer = reinterpret_cast<char*>(u2pPacket);
+        u2pPacket[13] = 0x0a;
+        writeBuffer = reinterpret_cast<char *>(u2pPacket);
         RS232.Write(writeBuffer);
-        
     }
 
     void spin()
@@ -182,11 +255,11 @@ private:
 
     // TODO :
     // Any variable you need can be created here.
-    unsigned char* p2uPacket;
-    string readBuffer; 
+    unsigned char *p2uPacket;
+    string readBuffer;
     unsigned char u2pPacket[14];
     string writeBuffer;
-    
+
     SerialPort RS232;
 };
 
