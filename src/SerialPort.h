@@ -9,11 +9,6 @@
 #include <termios.h> 	// POSIX terminal control definitions (struct termios)
 #include <system_error>	// For throwing std::system_error
 
-// TODO:
-// too much including on header. this will increase compile time and binary size later... 
-// move privatly using headers to inside the 'SerialPort.cpp' file
-// I think vector and string is enough for now.
-
 using namespace std;
 
 class SerialPort
@@ -27,12 +22,24 @@ public:
   void Configure();
   
   
+  void Read(unsigned char* rpacket, int packetsize);
   void Read(string& data);
+  void Write(unsigned char*  wpacket, int packetsize);
   void Write(const string& data);
-  void ReadPacket(string& data);
   
 private:
   int fd; // File Descriptor
   vector<char> readBuffer;
   const static unsigned char defaultReadBufferSize = 255;
+};
+
+
+class queue3{
+    public:
+        unsigned char buf[3];
+        int _size;
+        queue3();
+        void push(unsigned char src);
+        bool check_start();
+        void print();
 };
