@@ -128,6 +128,16 @@ bool is_valid_P2U(ringbuf &buf)
            (buf[16] == 0x54) &&
            (buf[17] == 0x53);
 }
+
+void print_ring(ringbuf &buf)
+{
+	cout <<"ring buf: ";
+	for(int i=0; i<int(buf.size()); i++)
+	{
+		cout <<static_cast<int>(buf[i])<< " ";
+	}
+	cout << endl;
+}
 void ntoh_packet(unsigned char *packet, int size)
 {
     unsigned char temp;
@@ -223,7 +233,7 @@ public:
         unsigned char *p2uPacket = (unsigned char *)&p2u;
         readPacket(p2uPacket, 18);
         int enc = *(int *)p2u.__enc;
-
+	cout<<"p2u alive:  "<< static_cast<int>(p2u.alive) << endl;
         if (p2ulog.is_open())
         {
             p2ulog << time(NULL) << ",";                   //timestamp
@@ -301,7 +311,10 @@ public:
         p2ubuffer.push(packetBuffer[0]);
         while (!is_valid_P2U(p2ubuffer))
         {
-            RS232.Read(packetBuffer, 1);
+	   
+	    p2ulog << static_cast<int>(p2ubuffer[0]);
+	    p2ulog << " ";
+	    RS232.Read(packetBuffer, 1);
             p2ubuffer.push(packetBuffer[0]);
         }
         p2ubuffer.copy(packetBuffer, size);

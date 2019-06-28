@@ -16,6 +16,10 @@
 !srv/*
 !srv/**
 
+!log
+!log/*
+!log/**
+
 !.gitignore
 !CMakeLists.txt
 !package.xml
