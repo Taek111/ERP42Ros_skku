@@ -45,10 +45,7 @@ struct pcu_to_upper
         short steer;
     };
     unsigned char brake;
-    union {
-        unsigned char __enc[4];
-        int enc; 
-    };
+	unsigned char __enc[4];
     unsigned char alive;
     unsigned char ext[2] = {0x0d, 0x0a};
 };
@@ -144,7 +141,6 @@ void ntoh_packet(unsigned char * packet, int size)
 
 string p2ulog_file;
 string u2plog_file;
-
 void make_logfile()
 {
 	time_t timer = time(NULL);
@@ -201,9 +197,10 @@ public:
     {
         // Receive feedback message from RS232
         // and store it to the this->u2p
-        
 		unsigned char*p2uPacket = (unsigned char *)&p2u;
       	readPacket(p2uPacket, 18);
+      	int enc = *(int*)p2u.__enc;
+      	
         if(p2ulog.is_open()){
             p2ulog << time(NULL) <<",";                             //timestamp
             p2ulog << static_cast<int> (p2u.AorM) <<",";   //Auto/Manual
@@ -212,7 +209,7 @@ public:
             p2ulog << p2u.speed <<",";                                //Speed
             p2ulog << p2u.steer <<",";                                  //Steer
             p2ulog << static_cast<int>(p2u.brake) <<",";    //Brake
-            p2ulog << p2u.enc <<",";                                    //Encoder
+            p2ulog << enc <<",";                                    //Encoder
             p2ulog <<  static_cast<int>(p2u.alive) << endl; //Alive
         }
         // if there was incomming message from RS232,
@@ -225,7 +222,7 @@ public:
         feedback_msg.steer_rad = (double) (M_PI / 180) * p2u.steer / 71;
         feedback_msg.steer_degree = (double) p2u.steer / 71;
         feedback_msg.brake = (int16_t) p2u.brake;
-        feedback_msg.encoder = p2u.enc;
+        //feedback_msg.encoder = p2u.enc;
 
         // After Copy, Publish to the ROS
         PublishFeedback();
@@ -240,7 +237,7 @@ public:
         u2p.alive = p2u.alive;
 
         // send the packet via RS232
-        unsigned char*u2pPacket = (unsigned char *)&u2pPacket;
+        unsigned char*u2pPacket = (unsigned char *)&u2p;
         u2pPacket[3] = u2p.AorM;
         u2pPacket[4] = u2p.EStop;
         u2pPacket[5] = u2p.gear;
@@ -284,7 +281,8 @@ public:
         }
         p2ubuffer.copy(packetBuffer, size);
         ntoh_packet(packetBuffer, size);
-    }
+     }
+   
 
 private:
     ros::Publisher pub;
@@ -319,6 +317,7 @@ int main(int argc, char **argv)
     // now argv[1] is devname
     ros::NodeHandle n;
     make_logfile();
+    cout<<endl<<p2ulog_file<<" "<<u2plog_file;
     ERP42Interface erp42(n, argv[1]);
     erp42.spin();
     return 0;

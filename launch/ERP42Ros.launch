@@ -1,4 +1,4 @@
 <launch>
-  <node pkg="erp42_ros" name="ERP42Ros0" type="ERP42Ros" args="/dev/ttyUSB1"/>
-  <param name="log_path" type="str" value="~/my_catkin/src/erp42/log/"/>
+  <node pkg="erp42_ros" name="ERP42Ros0" type="ERP42Ros" args="/dev/ttyUSB0"/>
+  <param name="log_path" type="str" value="/home/taekwon/my_catkin/src/erp42/log/"/>
 </launch>  
