@@ -4,9 +4,9 @@
 #include "erp42_ros/ERP42_input.h"
 #include "erp42_ros/ERP42_feedback.h"
 #include "SerialPort.h"
-#include<iostream>
-#include<fstream>
-#include<string>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 namespace
@@ -14,9 +14,9 @@ namespace
 struct upper_to_pcu
 {
     unsigned char stx[3] = {0x53, 0x54, 0x58};
-    unsigned char AorM = {0x01}; //Auto mode 
+    unsigned char AorM = {0x01};  //Auto mode
     unsigned char EStop = {0x00}; //E-STOP Off
-    unsigned char gear = 0x01; //neutral
+    unsigned char gear = 0x01;    //neutral
     union {
         unsigned char __speed[2]; //speed = 0 kph
         unsigned short speed = 0;
@@ -25,8 +25,8 @@ struct upper_to_pcu
         unsigned char __steer[2]; // steer = 0
         short steer = 0;
     };
-    unsigned char brake = 0x3C; //30% braking(60) 
-    unsigned char alive ;
+    unsigned char brake = 0x3C; //30% braking(60)
+    unsigned char alive;
     unsigned char ext[2] = {0x0d, 0x0a};
 };
 
@@ -45,7 +45,7 @@ struct pcu_to_upper
         short steer;
     };
     unsigned char brake;
-	unsigned char __enc[4];
+    unsigned char __enc[4];
     unsigned char alive;
     unsigned char ext[2] = {0x0d, 0x0a};
 };
@@ -54,7 +54,7 @@ enum packet_size : unsigned int
 {
     SIZE_P2U = sizeof(pcu_to_upper),
     SIZE_U2P = sizeof(upper_to_pcu),
-    
+
 };
 class ringbuf
 {
@@ -66,8 +66,8 @@ private:
 public:
     ringbuf(size_t size) : _buf(new unsigned char[size]), _cursor(0), _size(size)
     {
-        unsigned char*iter = _buf;
-        const  unsigned char*end = _buf + size;
+        unsigned char *iter = _buf;
+        const unsigned char *end = _buf + size;
         while (iter != end)
         {
             *iter = 0;
@@ -80,11 +80,11 @@ public:
     }
     void reset() { _cursor = 0; }
     size_t size() { return _size; }
-    const  unsigned char&at(size_t index)
+    const unsigned char &at(size_t index)
     {
         return _buf[(index + _cursor) % _size];
     }
-    unsigned char*cursor()
+    unsigned char *cursor()
     {
         return &_buf[_cursor];
     }
@@ -92,7 +92,7 @@ public:
     {
         _cursor = (_cursor + offset) % _size;
     }
-    const  unsigned char&operator[](size_t index)
+    const unsigned char &operator[](size_t index)
     {
         return at(index);
     }
@@ -100,7 +100,7 @@ public:
     {
         return next(1);
     }
-    void push(const  unsigned char&data)
+    void push(const unsigned char &data)
     {
         *cursor() = data;
         next(1);
@@ -108,8 +108,8 @@ public:
     void copy(unsigned char *dst, size_t size)
     {
         size_t i = 0;
-        unsigned char*iter = (unsigned char*)dst;
-        const  unsigned char*end = iter + size;
+        unsigned char *iter = (unsigned char *)dst;
+        const unsigned char *end = iter + size;
         while (iter != end)
         {
             *iter = at(i);
@@ -128,36 +128,59 @@ bool is_valid_P2U(ringbuf &buf)
            (buf[16] == 0x54) &&
            (buf[17] == 0x53);
 }
-void ntoh_packet(unsigned char * packet, int size)
+void ntoh_packet(unsigned char *packet, int size)
 {
     unsigned char temp;
-    for (int i=0; i<size/2; i++)
+    for (int i = 0; i < size / 2; i++)
     {
         temp = packet[i];
-        packet[i] = packet[size-i-1];
-        packet[size-i-1] = temp;
+        packet[i] = packet[size - i - 1];
+        packet[size - i - 1] = temp;
     }
 }
+
+// see these functions
+void swap(void *p1, void *p2)
+{
+    char tmp = *(char *)p1;
+    *(char *)p1 = *(char *)p2;
+    *(char *)p2 = tmp;
+}
+void ntoh16(void *src)
+{
+    swap(src, src + 1);
+}
+void ntoh32(void *src)
+{
+    swap(src, src + 3);
+    swap(src + 1, src + 2);
+}
+void ntoh_p2u(pcu_to_upper *packet)
+{
+    ntoh16(packet->__speed);
+    ntoh16(packet->__steer);
+    ntoh32(packet->__enc);
+}
+// end of these functions.
 
 string p2ulog_file;
 string u2plog_file;
 void make_logfile()
 {
-	time_t timer = time(NULL);
-	struct tm *t = localtime(&timer);
-	string log_path;
-	string file_num = to_string(t->tm_mon+1) +  "." + to_string(t->tm_mday);
-    if(ros::param::get("log_path", log_path))
-	{	
-		p2ulog_file = log_path + "p2ulog(" + file_num + ").txt";
-		u2plog_file = log_path + "u2plog(" + file_num + ").txt";
-	}
-	else
-	cout << "get log_path failed!" << endl;
+    time_t timer = time(NULL);
+    struct tm *t = localtime(&timer);
+    string log_path;
+    string file_num = to_string(t->tm_mon + 1) + "." + to_string(t->tm_mday);
+    if (ros::param::get("log_path", log_path))
+    {
+        p2ulog_file = log_path + "p2ulog(" + file_num + ").txt";
+        u2plog_file = log_path + "u2plog(" + file_num + ").txt";
+    }
+    else
+        cout << "get log_path failed!" << endl;
 }
 
 } // namespace
-
 
 class ERP42Interface
 {
@@ -170,14 +193,14 @@ public:
     {
         // open serial device
         // if open device fails, throw.
-        // there is no catch for this throw, so this process will be exit with error.        
+        // there is no catch for this throw, so this process will be exit with error.
     }
     ~ERP42Interface()
     {
         // close the device
-         RS232.Close();
-         p2ulog.close();
-         u2plog.close();
+        RS232.Close();
+        p2ulog.close();
+        u2plog.close();
     }
     void OnInputMsgRecv(const erp42_ros::ERP42_input &msg)
     {
@@ -197,31 +220,32 @@ public:
     {
         // Receive feedback message from RS232
         // and store it to the this->u2p
-		unsigned char*p2uPacket = (unsigned char *)&p2u;
-      	readPacket(p2uPacket, 18);
-      	int enc = *(int*)p2u.__enc;
-      	
-        if(p2ulog.is_open()){
-            p2ulog << time(NULL) <<",";                             //timestamp
-            p2ulog << static_cast<int> (p2u.AorM) <<",";   //Auto/Manual
-            p2ulog << static_cast<int>(p2u.EStop) <<",";    //E-STOP
-            p2ulog <<static_cast<int>(p2u.gear) <<",";        //Gear
-            p2ulog << p2u.speed <<",";                                //Speed
-            p2ulog << p2u.steer <<",";                                  //Steer
-            p2ulog << static_cast<int>(p2u.brake) <<",";    //Brake
-            p2ulog << enc <<",";                                    //Encoder
-            p2ulog <<  static_cast<int>(p2u.alive) << endl; //Alive
+        unsigned char *p2uPacket = (unsigned char *)&p2u;
+        readPacket(p2uPacket, 18);
+        int enc = *(int *)p2u.__enc;
+
+        if (p2ulog.is_open())
+        {
+            p2ulog << time(NULL) << ",";                   //timestamp
+            p2ulog << static_cast<int>(p2u.AorM) << ",";   //Auto/Manual
+            p2ulog << static_cast<int>(p2u.EStop) << ",";  //E-STOP
+            p2ulog << static_cast<int>(p2u.gear) << ",";   //Gear
+            p2ulog << p2u.speed << ",";                    //Speed
+            p2ulog << p2u.steer << ",";                    //Steer
+            p2ulog << static_cast<int>(p2u.brake) << ",";  //Brake
+            p2ulog << enc << ",";                          //Encoder
+            p2ulog << static_cast<int>(p2u.alive) << endl; //Alive
         }
         // if there was incomming message from RS232,
         // copy the message to the this->feedback_msg properly
-        feedback_msg.mode = (p2u.AorM == 0x01)? (int16_t)1 : (int16_t)0; 
-        feedback_msg.Estop = (p2u.EStop == 0x01)? true : false;
-        feedback_msg.gear =  (int16_t)p2u.gear;
-        feedback_msg.speed_mps = (double) p2u.speed / 36;
-        feedback_msg.speed_kph = (double) p2u.speed / 10;
-        feedback_msg.steer_rad = (double) (M_PI / 180) * p2u.steer / 71;
-        feedback_msg.steer_degree = (double) p2u.steer / 71;
-        feedback_msg.brake = (int16_t) p2u.brake;
+        feedback_msg.mode = (p2u.AorM == 0x01) ? (int16_t)1 : (int16_t)0;
+        feedback_msg.Estop = (p2u.EStop == 0x01) ? true : false;
+        feedback_msg.gear = (int16_t)p2u.gear;
+        feedback_msg.speed_mps = (double)p2u.speed / 36;
+        feedback_msg.speed_kph = (double)p2u.speed / 10;
+        feedback_msg.steer_rad = (double)(M_PI / 180) * p2u.steer / 71;
+        feedback_msg.steer_degree = (double)p2u.steer / 71;
+        feedback_msg.brake = (int16_t)p2u.brake;
         //feedback_msg.encoder = p2u.enc;
 
         // After Copy, Publish to the ROS
@@ -229,7 +253,7 @@ public:
 
         // make packet on u2p from latest ERP42_input
         u2p.AorM = (input_msg.mode == 1) ? 0x01 : 0x00;
-        u2p.EStop = (input_msg.Estop == true) ? 0x01: 0x00;
+        u2p.EStop = (input_msg.Estop == true) ? 0x01 : 0x00;
         u2p.gear = (unsigned char)input_msg.gear;
         u2p.speed = (unsigned short)(input_msg.speed_kph * 10);
         u2p.steer = (short)(input_msg.steer_degree * 71);
@@ -237,7 +261,7 @@ public:
         u2p.alive = p2u.alive;
 
         // send the packet via RS232
-        unsigned char*u2pPacket = (unsigned char *)&u2p;
+        unsigned char *u2pPacket = (unsigned char *)&u2p;
         u2pPacket[3] = u2p.AorM;
         u2pPacket[4] = u2p.EStop;
         u2pPacket[5] = u2p.gear;
@@ -248,16 +272,17 @@ public:
         u2pPacket[10] = u2p.brake;
         u2pPacket[11] = u2p.alive;
         RS232.Write(u2pPacket, 14);
-         if(u2plog.is_open()){
-            u2plog << time(NULL) <<",";                             //timestamp
-            u2plog << static_cast<int> (u2p.AorM) <<",";   //Auto/Manual
-            u2plog << static_cast<int>(u2p.EStop) <<",";    //E-STOP
-            u2plog <<static_cast<int>(u2p.gear) <<",";        //Gear
-            u2plog << u2p.speed <<",";                                //Speed
-            u2plog << u2p.steer <<",";                                  //Steer
-            u2plog << static_cast<int>(u2p.brake) <<",";    //Brake        
-            u2plog <<  static_cast<int>(u2p.alive) << endl; //Alive
-        }       
+        if (u2plog.is_open())
+        {
+            u2plog << time(NULL) << ",";                   //timestamp
+            u2plog << static_cast<int>(u2p.AorM) << ",";   //Auto/Manual
+            u2plog << static_cast<int>(u2p.EStop) << ",";  //E-STOP
+            u2plog << static_cast<int>(u2p.gear) << ",";   //Gear
+            u2plog << u2p.speed << ",";                    //Speed
+            u2plog << u2p.steer << ",";                    //Steer
+            u2plog << static_cast<int>(u2p.brake) << ",";  //Brake
+            u2plog << static_cast<int>(u2p.alive) << endl; //Alive
+        }
     }
 
     void spin()
@@ -270,19 +295,18 @@ public:
         }
     }
 
-    void readPacket(unsigned char* packetBuffer, int size)
+    void readPacket(unsigned char *packetBuffer, int size)
     {
         RS232.Read(packetBuffer, 1);
         p2ubuffer.push(packetBuffer[0]);
-        while(!is_valid_P2U(p2ubuffer))
+        while (!is_valid_P2U(p2ubuffer))
         {
             RS232.Read(packetBuffer, 1);
             p2ubuffer.push(packetBuffer[0]);
         }
         p2ubuffer.copy(packetBuffer, size);
         ntoh_packet(packetBuffer, size);
-     }
-   
+    }
 
 private:
     ros::Publisher pub;
@@ -317,7 +341,8 @@ int main(int argc, char **argv)
     // now argv[1] is devname
     ros::NodeHandle n;
     make_logfile();
-    cout<<endl<<p2ulog_file<<" "<<u2plog_file;
+    cout << endl
+         << p2ulog_file << " " << u2plog_file;
     ERP42Interface erp42(n, argv[1]);
     erp42.spin();
     return 0;
