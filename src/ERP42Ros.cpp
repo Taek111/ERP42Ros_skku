@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <string.h>
+
 
 using namespace std;
 namespace
@@ -26,7 +28,7 @@ struct upper_to_pcu
         short steer = 0;
     };
     unsigned char brake = 0x3C; //30% braking(60)
-    unsigned char alive;
+    unsigned char alive = 0x00;
     unsigned char ext[2] = {0x0d, 0x0a};
 };
 
@@ -129,6 +131,12 @@ bool is_valid_P2U(ringbuf &buf)
            (buf[17] == 0x53);
 }
 
+void print_buf(ringbuf& buf){
+for(size_t i=0; i<buf.size();++i){
+	printf("0x%02x ",buf[i]);
+}
+printf("\n");
+}
 void print_ring(ringbuf &buf)
 {
 	cout <<"ring buf: ";
@@ -228,6 +236,30 @@ public:
     // this is control frequency
     void update()
     {
+
+        // send the packet via RS232
+        unsigned char *u2pPacket = (unsigned char *)&u2p;
+        u2pPacket[3] = u2p.AorM;
+        u2pPacket[4] = u2p.EStop;
+        u2pPacket[5] = u2p.gear;
+        u2pPacket[6] = u2p.__speed[0];
+        u2pPacket[7] = u2p.__speed[1];
+        u2pPacket[8] = u2p.__steer[0];
+        u2pPacket[9] = u2p.__steer[1];
+        u2pPacket[10] = u2p.brake;
+        u2pPacket[11] = u2p.alive;
+        RS232.Write(u2pPacket, 14);
+        if (u2plog.is_open())
+        {
+            u2plog << time(NULL) << ",";                   //timestamp
+            u2plog << static_cast<int>(u2p.AorM) << ",";   //Auto/Manual
+            u2plog << static_cast<int>(u2p.EStop) << ",";  //E-STOP
+            u2plog << static_cast<int>(u2p.gear) << ",";   //Gear
+            u2plog << u2p.speed << ",";                    //Speed
+            u2plog << u2p.steer << ",";                    //Steer
+            u2plog << static_cast<int>(u2p.brake) << ",";  //Brake
+            u2plog << static_cast<int>(u2p.alive) << endl; //Alive
+        }
         // Receive feedback message from RS232
         // and store it to the this->u2p
         unsigned char *p2uPacket = (unsigned char *)&p2u;
@@ -270,29 +302,7 @@ public:
         u2p.brake = (unsigned char)input_msg.brake;
         u2p.alive = p2u.alive;
 
-        // send the packet via RS232
-        unsigned char *u2pPacket = (unsigned char *)&u2p;
-        u2pPacket[3] = u2p.AorM;
-        u2pPacket[4] = u2p.EStop;
-        u2pPacket[5] = u2p.gear;
-        u2pPacket[6] = u2p.__speed[0];
-        u2pPacket[7] = u2p.__speed[1];
-        u2pPacket[8] = u2p.__steer[0];
-        u2pPacket[9] = u2p.__steer[1];
-        u2pPacket[10] = u2p.brake;
-        u2pPacket[11] = u2p.alive;
-        RS232.Write(u2pPacket, 14);
-        if (u2plog.is_open())
-        {
-            u2plog << time(NULL) << ",";                   //timestamp
-            u2plog << static_cast<int>(u2p.AorM) << ",";   //Auto/Manual
-            u2plog << static_cast<int>(u2p.EStop) << ",";  //E-STOP
-            u2plog << static_cast<int>(u2p.gear) << ",";   //Gear
-            u2plog << u2p.speed << ",";                    //Speed
-            u2plog << u2p.steer << ",";                    //Steer
-            u2plog << static_cast<int>(u2p.brake) << ",";  //Brake
-            u2plog << static_cast<int>(u2p.alive) << endl; //Alive
-        }
+
     }
 
     void spin()
@@ -311,7 +321,7 @@ public:
         p2ubuffer.push(packetBuffer[0]);
         while (!is_valid_P2U(p2ubuffer))
         {
-	   
+	    print_buf(p2ubuffer);
 	    p2ulog << static_cast<int>(p2ubuffer[0]);
 	    p2ulog << " ";
 	    RS232.Read(packetBuffer, 1);
