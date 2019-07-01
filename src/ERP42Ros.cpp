@@ -19,9 +19,14 @@ struct upper_to_pcu
     unsigned char AorM = {0x01};  //Auto mode
     unsigned char EStop = {0x00}; //E-STOP Off
     unsigned char gear = 0x01;    //neutral
-    unsigned char __speed[2]; //speed = 0 kph
-    unsigned char __steer[2]; // steer = 0
-  
+    union {
+        unsigned char __speed[2];
+        unsigned short speed;
+    };
+    union {
+        unsigned char __steer[2];
+        short steer;
+    };
     unsigned char brake = 0x3C; //30% braking(60)
     unsigned char alive = 0x00;
     unsigned char ext[2] = {0x0d, 0x0a};
@@ -260,6 +265,7 @@ public:
         // and store it to the this->u2p
         unsigned char *p2uPacket = (unsigned char *)&p2u;
         readPacket(p2uPacket, 18);
+	p2u.steer *= -1;
         int enc = *(int *)p2u.__enc;
 	cout<<"p2u alive:  "<< static_cast<int>(p2u.alive) << endl;
         if (p2ulog.is_open())
@@ -299,7 +305,7 @@ public:
         u2p.steer = (short)(input_msg.steer_degree * 71);
         u2p.brake = (unsigned char)input_msg.brake;
 	ntoh16(&u2p.speed);
-	ntoh16(&u2p.
+	ntoh16(&u2p.steer);
         }
         u2p.alive = p2u.alive;
         
