@@ -19,14 +19,9 @@ struct upper_to_pcu
     unsigned char AorM = {0x01};  //Auto mode
     unsigned char EStop = {0x00}; //E-STOP Off
     unsigned char gear = 0x01;    //neutral
-    union {
-        unsigned char __speed[2]; //speed = 0 kph
-        unsigned short speed = 0;
-    };
-    union {
-        unsigned char __steer[2]; // steer = 0
-        short steer = 0;
-    };
+    unsigned char __speed[2]; //speed = 0 kph
+    unsigned char __steer[2]; // steer = 0
+  
     unsigned char brake = 0x3C; //30% braking(60)
     unsigned char alive = 0x00;
     unsigned char ext[2] = {0x0d, 0x0a};
@@ -303,6 +298,8 @@ public:
         u2p.speed = (unsigned short)(input_msg.speed_kph * 10);
         u2p.steer = (short)(input_msg.steer_degree * 71);
         u2p.brake = (unsigned char)input_msg.brake;
+	ntoh16(&u2p.speed);
+	ntoh16(&u2p.
         }
         u2p.alive = p2u.alive;
         
