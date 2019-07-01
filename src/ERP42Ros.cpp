@@ -223,6 +223,7 @@ public:
     void OnInputMsgRecv(const erp42_ros::ERP42_input &msg)
     {
         input_msg = msg;
+        input_received = true;
         // this is debug message. if you want to see if this node receives topic,
         // uncomment following line
         // ROS_INFO("ERP42_input message received!\n");
@@ -294,14 +295,17 @@ public:
         PublishFeedback();
 
         // make packet on u2p from latest ERP42_input
+        if(input_received)
+        {
         u2p.AorM = (input_msg.mode == 1) ? 0x01 : 0x00;
         u2p.EStop = (input_msg.Estop == true) ? 0x01 : 0x00;
         u2p.gear = (unsigned char)input_msg.gear;
         u2p.speed = (unsigned short)(input_msg.speed_kph * 10);
         u2p.steer = (short)(input_msg.steer_degree * 71);
         u2p.brake = (unsigned char)input_msg.brake;
+        }
         u2p.alive = p2u.alive;
-
+        
 
     }
 
@@ -344,6 +348,7 @@ private:
     ofstream u2plog;
     ofstream p2ulog;
     ringbuf p2ubuffer;
+    bool input_received = false;
 };
 
 void print_usage()
