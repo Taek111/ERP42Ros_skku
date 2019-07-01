@@ -124,11 +124,11 @@ public:
 };
 bool is_valid_P2U(ringbuf &buf)
 {
-    return (buf[0] == 0x0A) &&
-           (buf[1] == 0x0D) &&
-           (buf[15] == 0x58) &&
-           (buf[16] == 0x54) &&
-           (buf[17] == 0x53);
+    return (buf[0] == 0x53) &&
+           (buf[1] == 0x54) &&
+           (buf[2] == 0x58) &&
+           (buf[16] == 0x0D) &&
+           (buf[17] == 0x0A);
 }
 
 void print_buf(ringbuf& buf){
@@ -175,9 +175,9 @@ void ntoh32(void *src)
 }
 void ntoh_p2u(pcu_to_upper *packet)
 {
-    ntoh16(packet->__speed);
-    ntoh16(packet->__steer);
-    ntoh32(packet->__enc);
+    //ntoh16(packet->__speed);
+    //ntoh16(packet->__steer);
+    //ntoh32(packet->__enc);
 }
 // end of these functions.
 
@@ -321,14 +321,13 @@ public:
         p2ubuffer.push(packetBuffer[0]);
         while (!is_valid_P2U(p2ubuffer))
         {
-	    print_buf(p2ubuffer);
 	    p2ulog << static_cast<int>(p2ubuffer[0]);
 	    p2ulog << " ";
 	    RS232.Read(packetBuffer, 1);
             p2ubuffer.push(packetBuffer[0]);
         }
         p2ubuffer.copy(packetBuffer, size);
-        ntoh_packet(packetBuffer, size);
+        ntoh_p2u((pcu_to_upper*)packetBuffer);
     }
 
 private:
