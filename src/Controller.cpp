@@ -17,7 +17,7 @@ public:
           feedback_sub(n.subscribe("feedback", 100, &Controller::OnFeedbackRecv, this)),
           loop_rate(50)
 
-    {
+    { 
         // initialize target msg
         target_msg.brake = 50;
         target_msg.gear = 1;
@@ -34,6 +34,7 @@ public:
         input_msg.steer_rad = target_msg.steer_rad;
         input_msg.steer_degree = target_msg.steer_rad * 180.0 / M_PI;
         input_msg.brake = target_msg.brake;
+        
 
         ctrl_input_pub.publish(input_msg);
     }

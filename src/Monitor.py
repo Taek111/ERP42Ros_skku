@@ -103,7 +103,7 @@ class RosInputSub:
 class RosTargetSub:
 
     def __init__(self,value_table):
-        rospy.Subscriber("target", target, self.callback)
+        rospy.Subscriber("target_input", target, self.callback)
         self.gear_value = value_table.get('target_gear')
         self.speed_mps_value = value_table.get('target_speed_mps')
         self.steer_rad_value = value_table.get('target_steer_rad')

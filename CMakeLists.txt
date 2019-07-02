@@ -140,7 +140,8 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/atlas_robotics_node.cpp)
 
 add_executable(ERP42Ros
- src/ERP42Ros.cpp
+src/ERP42Ros.cpp
+src/SerialPort.cpp
 )
 target_link_libraries(ERP42Ros ${catkin_LIBRARIES})
 add_dependencies(ERP42Ros erp42_ros_generate_messages_cpp)
