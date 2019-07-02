@@ -120,8 +120,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  src
 )
 
 ## Declare a C++ library
@@ -139,15 +140,24 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/atlas_robotics_node.cpp)
 
+# add excutable for ERP42Ros node
 add_executable(ERP42Ros
 src/ERP42Ros.cpp
 src/SerialPort.cpp
 )
 target_link_libraries(ERP42Ros ${catkin_LIBRARIES})
 add_dependencies(ERP42Ros erp42_ros_generate_messages_cpp)
+
+# add excutable for Controller node
 add_executable(Controller src/Controller.cpp)
 target_link_libraries(Controller ${catkin_LIBRARIES})
 add_dependencies(Controller erp42_ros_generate_messages_cpp)
+
+# add excutable for Proxy node
+add_executable(proxy_node src/proxy_node.cpp)
+target_link_libraries(proxy_node ${catkin_LIBRARIES})
+add_dependencies(proxy_node erp42_ros_generate_messages_cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
