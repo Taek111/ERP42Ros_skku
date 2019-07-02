@@ -1,0 +1,28 @@
+<launch>
+	<node name="joystick" pkg="joy" type="joy_node">
+        <param name ="dev" type="str" value="/dev/input/js0"/>
+        <remap from="joy" to="UI/input"/>
+	</node>
+
+    <node name="interpreter" pkg="erp42_ros" type="Interpreter.py">
+        <remap from="joy" to="UI/input"/>
+        <remap from="target" to="sys/target"/>
+    </node>
+    
+    <node pkg="erp42_ros" name="proxy" type="proxy_node" output="screen">
+      <param name="local_port" type="int" value="15160"/>
+      <param name="remote_port" type="int" value="15160"/>
+      <param name="remote_host" type="str" value="192.168.0.253"/>
+      <remap from="target" to="sys/target"/>
+      <remap from="feedback" to="sys/feedback"/>
+      <remap from="input" to="sys/input"/>
+    </node>
+    
+    <node name="monitor" pkg="erp42_ros" type="Monitor.py">
+        <remap from="ctrl_input" to="proxy/input"/>
+        <remap from="feedback" to="proxy/feedback"/>
+        <remap from="target_input" to="sys/target"/>
+    </node>
+
+    <node pkg="rqt_graph" name="rqt_graph" type="rqt_graph" output="screen"/>
+</launch>

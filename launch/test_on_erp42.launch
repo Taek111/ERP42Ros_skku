@@ -1,0 +1,32 @@
+<launch>
+
+    <node name="controller" pkg="erp42_ros" type="Controller">
+        <remap from="ctrl_input" to="sys/input"/>
+        <remap from="feedback" to="sys/feedback"/>
+        <remap from="target" to="proxy/target"/>
+    </node>
+
+    <node name="monitor" pkg="erp42_ros" type="Monitor.py">
+        <remap from="ctrl_input" to="sys/input"/>
+        <remap from="feedback" to="sys/feedback"/>
+        <remap from="target" to="proxy/target"/>
+    </node>
+
+    <node pkg="erp42_ros" name="ERP42Ros0" type="ERP42Ros" args="/dev/ttyUSB0">
+        <remap from="input" to="sys/input"/>
+        <remap from="output" to="sys/feedback"/>
+    </node>
+    <param name="log_path" type="str" value="/home/nvidia/catkin_ws/src/erp42/log/"/>
+    
+    <node pkg="erp42_ros" name="proxy" type="proxy_node" output="screen">
+      <param name="local_port" type="int" value="15160"/>
+      <param name="remote_port" type="int" value="15160"/>
+      <param name="remote_host" type="str" value="115.145.159.90"/>
+      <remap from="target" to="sys/target"/>
+      <remap from="feedback" to="sys/feedback"/>
+      <remap from="input" to="sys/input"/>
+    </node>
+    
+    <node pkg="rqt_graph" name="rqt_graph" type="rqt_graph" output="screen"/>
+
+</launch>

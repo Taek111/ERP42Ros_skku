@@ -1,6 +1,16 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import sys
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
+import rospy
+from erp42_ros.msg import ERP42_feedback
+from erp42_ros.msg import ERP42_input
+from erp42_ros.msg import target
+import math
+
 
 class Value:
     def __init__(self, name, unit=''):
@@ -23,13 +33,15 @@ class ValueTable:
         self.table = {
             'target_gear': Value('gear'),
             'target_speed_mps': Value('speed', 'm/s'),
+            'target_speed_kph': Value('speed', 'km/h'),
             'target_steer_rad': Value('steer', 'rad'),
+            'target_steer_deg': Value('steer', 'deg'),
             'target_brake': Value('brake', ' / 200'),
             'input_mode': Value('mode'),
             'input_Estop': Value('Estop'),
             'input_gear': Value('gear'),
             'input_speed_mps': Value('speed', 'm/s'),
-            'input_speed_kph': Value('speed', 'k/h'),
+            'input_speed_kph': Value('speed', 'km/h'),
             'input_steer_rad': Value('steer', 'rad'),
             'input_steer_degree': Value('steer', 'deg'),
             'input_brake': Value('brake', '/ 200'),
@@ -37,7 +49,7 @@ class ValueTable:
             'feedback_Estop': Value('Estop'),
             'feedback_gear': Value('gear'),
             'feedback_speed_mps': Value('speed', 'm/s'),
-            'feedback_speed_kph': Value('speed', 'k/h'),
+            'feedback_speed_kph': Value('speed', 'km/h'),
             'feedback_steer_rad': Value('steer', 'rad'),
             'feedback_steer_degree': Value('steer', 'deg'),
             'feedback_brake': Value('brake', '/ 200'),
@@ -47,14 +59,9 @@ class ValueTable:
     def get(self, key):
         return self.table[key]
 
-import rospy
-from erp42_ros.msg import ERP42_feedback
-from erp42_ros.msg import ERP42_input
-from erp42_ros.msg import target
-
 
 class RosFeedbackSub:
-    def __init__(self,value_table):
+    def __init__(self, value_table):
         rospy.Subscriber("feedback", ERP42_feedback, self.callback)
         self.mode_value = value_table.get('feedback_mode')
         self.Estop_value = value_table.get('feedback_Estop')
@@ -77,8 +84,9 @@ class RosFeedbackSub:
         self.brake_value.set(msg.brake)
         self.encoder_value.set(msg.encoder)
 
+
 class RosInputSub:
-    def __init__(self,value_table):
+    def __init__(self, value_table):
         rospy.Subscriber("ctrl_input", ERP42_input, self.callback)
         self.mode_value = value_table.get('input_mode')
         self.Estop_value = value_table.get('input_Estop')
@@ -102,23 +110,23 @@ class RosInputSub:
 
 class RosTargetSub:
 
-    def __init__(self,value_table):
+    def __init__(self, value_table):
         rospy.Subscriber("target_input", target, self.callback)
         self.gear_value = value_table.get('target_gear')
         self.speed_mps_value = value_table.get('target_speed_mps')
+        self.speed_kph_value = value_table.get('target_speed_kph')
         self.steer_rad_value = value_table.get('target_steer_rad')
+        self.steer_deg_value = value_table.get('target_steer_deg')
         self.brake_value = value_table.get('target_brake')
-        
-    def callback(self, msg):    
+
+    def callback(self, msg):
         self.gear_value.set(msg.gear)
         self.speed_mps_value.set(msg.speed_mps)
+        self.speed_kph_value.set(msg.speed_mps * 3.6)
         self.steer_rad_value.set(msg.steer_rad)
+        self.steer_deg_value.set(msg.steer_rad / math.pi * 180.0)
         self.brake_value.set(msg.brake)
 
-
-
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
-from PyQt5.QtCore import QTimer
 
 class ValueWidget(QWidget):
     def __init__(self, value):
@@ -162,52 +170,52 @@ class ValueWidget(QWidget):
         style = 'QLineEdit{{background-color: rgb({}, {}, {})}}'.format(
             str(r), str(g), str(b))
         self.textbox.setStyleSheet(style)
-        
+
     def update(self):
         self.textbox.setText(str(self.value))
-        
+
 
 class GearWidget(ValueWidget):
-    def __init__(self,value):
+    def __init__(self, value):
         super().__init__(value)
 
     def update(self):
         if self.value.get() is 0:
-            self.set_bg_color(0,255,0)
+            self.set_bg_color(0, 255, 0)
             self.textbox.setText('Drive')
         elif self.value.get() is 1:
-            self.set_bg_color(255,255,0)
+            self.set_bg_color(255, 255, 0)
             self.textbox.setText('Neutral')
         elif self.value.get() is 2:
-            self.set_bg_color(255,0,0)
+            self.set_bg_color(255, 0, 0)
             self.textbox.setText('Reverse')
-        
-        
+
+
 class ModeWidget(ValueWidget):
-    def __init__(self,value):
+    def __init__(self, value):
         super().__init__(value)
-        self.set_bg_color(255,0,0)
+        self.set_bg_color(255, 0, 0)
         self.textbox.setText('NULL')
 
     def update(self):
         if self.value.get() is 0:
-            self.set_bg_color(255,255,0)
+            self.set_bg_color(255, 255, 0)
             self.textbox.setText('MANUAL')
         elif self.value.get() is 1:
-            self.set_bg_color(0,255,0)
+            self.set_bg_color(0, 255, 0)
             self.textbox.setText('AUTO')
-        
+
+
 class MonitorWidget(QWidget):
-    def __init__(self,value_table):
+    def __init__(self, value_table):
         super().__init__()
         self.title = 'Monitor'
         self.left = 0
         self.top = 0
-        self.width = 200
+        self.width = 1000
         self.height = 500
-        self.widgets=[]
+        self.widgets = []
         self.initUI(value_table)
-
 
     def initUI(self, value_table):
         self.setWindowTitle(self.title)
@@ -215,29 +223,43 @@ class MonitorWidget(QWidget):
         self.color = [255, 255, 255]
 
         # make target widgets
-        self.target_gear_widget = GearWidget( value_table.get('target_gear'))
-        self.target_speed_mps_widget = ValueWidget(value_table.get('target_speed_mps'))
-        self.target_steer_rad_widget = ValueWidget(value_table.get('target_steer_rad'))
+        self.target_gear_widget = GearWidget(value_table.get('target_gear'))
+        self.target_speed_mps_widget = ValueWidget(
+            value_table.get('target_speed_mps'))
+        self.target_speed_kph_widget = ValueWidget(
+            value_table.get('target_speed_kph'))
+        self.target_steer_rad_widget = ValueWidget(
+            value_table.get('target_steer_rad'))
+        self.target_steer_deg_widget = ValueWidget(
+            value_table.get('target_steer_deg'))
         self.target_brake_widget = ValueWidget(value_table.get('target_brake'))
         self.target_layout = QVBoxLayout()
         self.target_layout.addWidget(self.target_gear_widget)
         self.target_layout.addWidget(self.target_speed_mps_widget)
+        self.target_layout.addWidget(self.target_speed_kph_widget)
         self.target_layout.addWidget(self.target_steer_rad_widget)
+        self.target_layout.addWidget(self.target_steer_deg_widget)
         self.target_layout.addWidget(self.target_brake_widget)
+
         self.widgets.append(self.target_gear_widget)
         self.widgets.append(self.target_speed_mps_widget)
+        self.widgets.append(self.target_speed_kph_widget)
         self.widgets.append(self.target_steer_rad_widget)
+        self.widgets.append(self.target_steer_deg_widget)
         self.widgets.append(self.target_brake_widget)
-        
 
         # make input widgets
         self.input_mode_widget = ModeWidget(value_table.get('input_mode'))
         self.input_Estop_widget = ValueWidget(value_table.get('input_Estop'))
         self.input_gear_widget = GearWidget(value_table.get('input_gear'))
-        self.input_speed_mps_widget = ValueWidget(value_table.get('input_speed_mps'))
-        self.input_speed_kph_widget = ValueWidget(value_table.get('input_speed_kph'))
-        self.input_steer_rad_widget = ValueWidget(value_table.get('input_steer_rad'))
-        self.input_steer_degree_widget = ValueWidget(value_table.get('input_steer_degree'))
+        self.input_speed_mps_widget = ValueWidget(
+            value_table.get('input_speed_mps'))
+        self.input_speed_kph_widget = ValueWidget(
+            value_table.get('input_speed_kph'))
+        self.input_steer_rad_widget = ValueWidget(
+            value_table.get('input_steer_rad'))
+        self.input_steer_degree_widget = ValueWidget(
+            value_table.get('input_steer_degree'))
         self.input_brake_widget = ValueWidget(value_table.get('input_brake'))
         self.input_layout = QVBoxLayout()
         self.input_layout.addWidget(self.input_mode_widget)
@@ -256,17 +278,26 @@ class MonitorWidget(QWidget):
         self.widgets.append(self.input_steer_rad_widget)
         self.widgets.append(self.input_steer_degree_widget)
         self.widgets.append(self.input_brake_widget)
-        
+
         # make feedback widgets
-        self.feedback_mode_widget = ModeWidget(value_table.get('feedback_mode'))
-        self.feedback_Estop_widget = ValueWidget(value_table.get('feedback_Estop'))
-        self.feedback_gear_widget = GearWidget(value_table.get('feedback_gear'))
-        self.feedback_speed_mps_widget = ValueWidget(value_table.get('feedback_speed_mps'))
-        self.feedback_speed_kph_widget = ValueWidget(value_table.get('feedback_speed_kph'))
-        self.feedback_steer_rad_widget = ValueWidget(value_table.get('feedback_steer_rad'))
-        self.feedback_steer_degree_widget = ValueWidget(value_table.get('feedback_steer_degree'))
-        self.feedback_brake_widget = ValueWidget(value_table.get('feedback_brake'))
-        self.feedback_encoder_widget = ValueWidget(value_table.get('feedback_encoder'))
+        self.feedback_mode_widget = ModeWidget(
+            value_table.get('feedback_mode'))
+        self.feedback_Estop_widget = ValueWidget(
+            value_table.get('feedback_Estop'))
+        self.feedback_gear_widget = GearWidget(
+            value_table.get('feedback_gear'))
+        self.feedback_speed_mps_widget = ValueWidget(
+            value_table.get('feedback_speed_mps'))
+        self.feedback_speed_kph_widget = ValueWidget(
+            value_table.get('feedback_speed_kph'))
+        self.feedback_steer_rad_widget = ValueWidget(
+            value_table.get('feedback_steer_rad'))
+        self.feedback_steer_degree_widget = ValueWidget(
+            value_table.get('feedback_steer_degree'))
+        self.feedback_brake_widget = ValueWidget(
+            value_table.get('feedback_brake'))
+        self.feedback_encoder_widget = ValueWidget(
+            value_table.get('feedback_encoder'))
         self.feedback_layout = QVBoxLayout()
         self.feedback_layout.addWidget(self.feedback_mode_widget)
         self.feedback_layout.addWidget(self.feedback_Estop_widget)
@@ -308,8 +339,6 @@ class MonitorWidget(QWidget):
         for w in self.widgets:
             w.update()
 
-import sys
-from PyQt5.QtWidgets import QApplication
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -321,5 +350,5 @@ if __name__ == '__main__':
     sub_target = RosTargetSub(vt)
     sub_input = RosInputSub(vt)
     ex = MonitorWidget(vt)
-    
+
     sys.exit(app.exec_())
