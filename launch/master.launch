@@ -1,9 +1,0 @@
-<launch>
-   <node pkg="erp42_ros" name="master_proxy" type="proxy_node" output="screen">
-      <param name="local_port" type="int" value="15150"/>
-      <param name="remote_port" type="int" value="15150"/>
-      <param name="remote_host" type="str" value="192.168.0.253"/>
-      <remap from="chatter" to="master/chatter"/>
-    </node>
-    <node pkg="rqt_graph" name="rqt_graph" type="rqt_graph" output="screen"/>
-</launch>

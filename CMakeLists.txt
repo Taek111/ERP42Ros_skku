@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -147,16 +148,6 @@ src/SerialPort.cpp
 )
 target_link_libraries(ERP42Ros ${catkin_LIBRARIES})
 add_dependencies(ERP42Ros erp42_ros_generate_messages_cpp)
-
-# add excutable for Controller node
-add_executable(Controller src/Controller.cpp)
-target_link_libraries(Controller ${catkin_LIBRARIES})
-add_dependencies(Controller erp42_ros_generate_messages_cpp)
-
-# add excutable for Proxy node
-add_executable(proxy_node src/proxy_node.cpp)
-target_link_libraries(proxy_node ${catkin_LIBRARIES})
-add_dependencies(proxy_node erp42_ros_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
