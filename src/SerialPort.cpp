@@ -42,7 +42,6 @@ void SerialPort::Configure(){
   if(tcgetattr(fd, &tty) != 0)
     cout << "Could not get terminal attributes - " << strerror(errno) << endl;
 
-
   tty.c_cflag &= ~PARENB;   //  No Parity  bit
   tty.c_cflag &= ~CSTOPB;   // 1 stop bit 
   tty.c_cflag &= ~CSIZE;	 // Clears the mask for setting the data size           
@@ -50,14 +49,13 @@ void SerialPort::Configure(){
   tty.c_cflag &= ~CRTSCTS;       // No Hardware flow Control                       
   tty.c_cflag |= CREAD | CLOCAL; // Enable receiver,Ignore Modem Control lines 
 
-  tty.c_iflag &= ~(IXON | IXOFF | IXANY);          // Disable XON/XOFF flow control both i/p and o/p                        
-  tty.c_iflag &= ~(BRKINT | ICRNL | IXON);
-  tty.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+  tty.c_iflag &= ~(IXON | IXOFF | IXANY);          // Disable XON/XOFF flow control both i/p and o/p             
+  tty.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);  // No input echo, non-canonical mode, not translate quit, intr, susp etc.
   
   tty.c_oflag &= ~OPOST;//No Output Processing
   
-  cfsetispeed(&tty,B115200); // Set Read  Speed as 9600                       */
-  cfsetospeed(&tty,B115200); // Set Write Speed as 9600
+  cfsetispeed(&tty,B115200); // Set Read  Speed as 115200                     
+  cfsetospeed(&tty,B115200); // Set Write Speed as 115200
 
   tty.c_cc[VMIN] = 36; // Read at least 36 characters 
   tty.c_cc[VTIME] = 1; // Wait 0.1sec  
