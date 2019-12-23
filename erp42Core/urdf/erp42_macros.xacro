@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<robot  xmlns:xacro="http://www.ros.org/xacro">
+  <xacro:include filename = "inertia.xacro"/>
+    <material name="purple" >
+        <color rgba="0.8392156862745098 0.2823529411764706 0.8431372549019608 1.0" />
+    </material>
+
+    <material name="green">
+        <color rgba="0.0 0.8 0.0 1.0"/>
+    </material>
+  <macro name = "car_wheel" params = "name">
+        <link name="${name}">
+            <visual>
+                <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
+                <geometry>
+                <cylinder length="0.17" radius="0.265"/>
+                </geometry>
+                <material name="green"/>
+            </visual>
+            <collision>
+                <origin rpy="0 1.507 1.507" xyz = "0 0 0"/>
+                <geometry>
+                    <cylinder length="0.025" radius="0.265"/>
+                </geometry>
+            </collision>
+            <inertial>
+                 <origin rpy="0 1.507 1.507" xyz = "0 0 0"/>
+                <mass value="0.2"/>
+                <xacro:cy_inertia mass="26.526" r="0.265" l="0.17" />
+            </inertial>
+        </link>
+    </macro>
+
+    <macro name="wheel_joint" params="name child child_origin">
+        <joint name="${name}" type="continuous">
+            <axis xyz="0 1 0"/>
+            <parent link="base_link"/>
+            <child link="${child}"/>
+            <origin rpy="0 0 0" xyz="${child_origin}"/>
+        </joint>
+    </macro>
+
+
+</robot>

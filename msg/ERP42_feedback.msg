@@ -1,9 +1,0 @@
-int16 mode
-bool Estop
-int16 gear
-float64 speed_mps
-float64 speed_kph
-float64 steer_rad
-float64 steer_degree
-int16 brake
-int32 encoder

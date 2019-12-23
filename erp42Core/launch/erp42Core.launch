@@ -1,0 +1,22 @@
+<launch>
+  <!-- ERP42 -->
+  <node pkg="erp42_slam2d" type="erp42Core" name="erp42_core" output="screen"/>
+
+  <!-- Robot state publisher -->
+
+  <arg name="multi_robot_name" default=""/>
+  <include file="$(find erp42_slam2d)/launch/include/description.launch.xml">
+  </include>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <param name="tf_prefix" value="$(arg multi_robot_name)"/>
+  </node>
+  <node pkg="erp42_ros" type="ERP42Ros" name="ERP42Ros" args="/dev/ttyUSB0"/>
+
+
+  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch">
+    </include>
+
+
+
+</launch>

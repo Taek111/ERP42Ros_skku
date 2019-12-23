@@ -1,0 +1,4 @@
+<launch>
+  <arg name="urdf_file" default="$(find xacro)/xacro --inorder '$(find erp42_slam2d)/urdf/erp42.xacro'" />
+  <param name="robot_description" command="$(arg urdf_file)" />
+</launch>

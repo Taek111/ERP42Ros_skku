@@ -1,0 +1,20 @@
+<launch>
+  <!-- Arguments -->
+<!--  <arg name="slam_methods" default="gmapping" doc="slam type [gmapping, cartographer, hector, karto, frontier_exploration]"/>-->
+  <arg name="slam_methods" default="gmapping"/>
+  <arg name="open_rviz" default="true"/>
+  <include file="$(find pointcloud_to_laserscan)/launch/sample_node.launch">
+  </include>
+
+  <!-- SLAM: Gmapping, Cartographer, Hector, Karto, Frontier_exploration, RTAB-Map -->
+  <include file="$(find erp42_slam2d)/launch/erp42_gmapping.launch">
+<!--    <arg name="model" value="erp42"/>-->
+<!--    <arg name="configuration_basename" value="$(arg configuration_basename)"/>-->
+  </include>
+
+  <!-- rviz -->
+   <group if="$(arg open_rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find erp42_slam2d)/rviz/erp42_gmapping.rviz"/>
+  </group>
+</launch>
